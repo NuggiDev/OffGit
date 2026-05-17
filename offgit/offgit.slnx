@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="ARM64" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="offgit/offgit.vcxproj" Id="269281da-91a9-49ca-976a-23b316feb5a2">
+    <Platform Solution="Debug|ARM64" Project="x64" />
+  </Project>
+</Solution>

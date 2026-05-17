@@ -5,6 +5,11 @@ Queue repositories while online → Cache them → Clone and work completely off
 
 ---
 
+# IMPORTANT
+**To compile you need to have c++ compiling tools**
+
+---
+
 ### ⚠️ Important Disclaimer
 
 **This software is provided "AS IS", without any warranty whatsoever.**

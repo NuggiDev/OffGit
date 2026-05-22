@@ -20,12 +20,13 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Build C++ Solution
-      # MSBuild natively handles the C++ compilation flags from the .slnx file
-      run: msbuild OffGit.slnx /p:Configuration=Release /p:Platform=x64
+      # Wildcard finds the solution file anywhere in the repo
+      run: msbuild **/*.slnx /p:Configuration=Release /p:Platform=x64
 
     - name: Stage Raw Executable
-      # Pulls the loose .exe out of the build directory and places it in the root
-      run: cp x64/Release/OffGit.exe ./OffGit.exe
+      # Wildcard finds the compiled .exe wherever it landed and copies it flat to the root
+      shell: bash
+      run: cp **/Release/OffGit.exe ./OffGit.exe
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2

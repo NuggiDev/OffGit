@@ -11,11 +11,6 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    
-    # This forces all steps to use Bash so paths and wildcards work cleanly
-    defaults:
-      run:
-        shell: bash
 
     steps:
     - name: Checkout source code
@@ -25,11 +20,12 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Build C++ Solution
-      # Hardcoded to your exact path so MSBuild can't miss it
+      # This runs in default cmd so it has access to the msbuild command
       run: msbuild offgit/OffGit.slnx /p:Configuration=Release /p:Platform=x64
 
     - name: Stage Raw Executable
-      # Bash easily expands the wildcard to find the compiled binary
+      # We target bash ONLY for this step so the wildcard expansion works
+      shell: bash
       run: cp **/Release/OffGit.exe ./OffGit.exe
 
     - name: Create GitHub Release

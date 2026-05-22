@@ -1,39 +1,32 @@
-name: Build and Release C++ Project
+name: Build and Release Windows C++ Project
 
 on:
   push:
     tags:
-      - 'v*' # Triggers the workflow only when you push a version tag
+      - 'v*' # Triggers when you push a tag like v1.0.0
 
 permissions:
-  contents: write # Crucial permission allowing the runner to create a release
+  contents: write # Grants the action permission to upload artifacts to your release
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-latest # Change to windows-latest if your project requires MSVC/Windows
+  build-windows:
+    runs-on: windows-latest
 
     steps:
     - name: Checkout source code
       uses: actions/checkout@v4
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -A x64
 
     - name: Build Project
-      run: cmake --build ${{github.workspace}}/build --config Release
-
-    - name: Package Binaries
-      run: |
-        mkdir staging
-        # Replace 'my_executable' with the actual name of your compiled binary file
-        cp ${{github.workspace}}/build/my_executable ./staging/
-        cd staging
-        tar -czvf ../release-assets.tar.gz *
+      run: cmake --build build --config Release
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: release-assets.tar.gz
-        generate_release_notes: true # Automatically generates a changelog based on commit history
+     
+        files: build/Release/OffGit.exe
+        generate_release_notes: true
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided automatically by GitHub
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

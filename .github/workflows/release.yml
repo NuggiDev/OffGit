@@ -19,33 +19,49 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Project
+      # --- Step 1: Build for x64 ---
+      - name: Build Project (x64)
         run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m
 
-      - name: 🔍 FIND THE EXE (VERY IMPORTANT)
+      # --- Step 2: Grab x64 immediately before it gets overwritten ---
+      - name: Stage x64 Binary
         shell: pwsh
         run: |
-          echo "=== Searching everywhere for OffGit.exe ==="
-          Get-ChildItem -Path . -Recurse -Filter OffGit.exe -ErrorAction SilentlyContinue | 
-            Select-Object FullName, Length | Format-Table -AutoSize
-
-      - name: Copy .exe to root for upload
-        shell: pwsh
-        run: |
-          $exePath = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
-          if ($exePath) {
-            Copy-Item $exePath -Destination "./OffGit.exe"
-            echo "✅ Copied $($exePath) to ./OffGit.exe"
-            dir ./OffGit.exe
+          $exe = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
+          if ($exe) {
+            Copy-Item $exe -Destination "./OffGitx64.exe"
+            echo "✅ Saved x64 binary to root as OffGitx64.exe"
+            # Clean up the original to avoid confusion later
+            Remove-Item $exe -Force
           } else {
-            echo "❌ OffGit.exe NOT FOUND"
+            echo "❌ x64 Build failed to produce OffGit.exe"
             exit 1
           }
 
+      # --- Step 3: Build for ARM64 ---
+      - name: Build Project (ARM64)
+        run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=ARM64 /p:PlatformToolset=v143 /m
+
+      # --- Step 4: Grab ARM64 ---
+      - name: Stage ARM64 Binary
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
+          if ($exe) {
+            Copy-Item $exe -Destination "./OffGitARM64.exe"
+            echo "✅ Saved ARM64 binary to root as OffGitARM64.exe"
+          } else {
+            echo "❌ ARM64 Build failed to produce OffGit.exe"
+            exit 1
+          }
+
+      # --- Step 5: Upload both safely labeled binaries ---
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./OffGit.exe
+          files: |
+            ./OffGitx64.exe
+            ./OffGitARM64.exe
           generate_release_notes: true
           name: "OffGit ${{ github.ref_name }}"
         env:

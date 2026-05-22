@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
     std::string arg3 = (argc >= 5) ? argv[4] : "";
 
     if (cmd == "help")                          printHelp();
+    else if (cmd == "--version" || cmd == "version") { std::cout << "offgit 1.0.0\n"; return 0; }
     else if (cmd == "queue" && arg1 == "add")        queueAdd(arg2);
     else if (cmd == "queue" && arg1 == "remove")     queueRemove(arg2);
     else if (cmd == "queue" && arg1 == "list")       queueList();

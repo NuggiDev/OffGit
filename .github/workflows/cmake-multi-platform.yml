@@ -3,10 +3,10 @@ name: Build and Release Windows C++ Project
 on:
   push:
     tags:
-      - 'v*' # Triggers when you push a tag like v1.0.0
+      - 'v*'
 
 permissions:
-  contents: write # Grants the action permission to upload artifacts to your release
+  contents: write
 
 jobs:
   build-windows:
@@ -16,17 +16,21 @@ jobs:
     - name: Checkout source code
       uses: actions/checkout@v4
 
-    - name: Configure CMake
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -A x64
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
-    - name: Build Project
-      run: cmake --build build --config Release
+    - name: Build C++ Solution
+      # MSBuild natively handles the C++ compilation flags from the .slnx file
+      run: msbuild OffGit.slnx /p:Configuration=Release /p:Platform=x64
+
+    - name: Stage Raw Executable
+      # Pulls the loose .exe out of the build directory and places it in the root
+      run: cp x64/Release/OffGit.exe ./OffGit.exe
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-     
-        files: build/Release/OffGit.exe
+        files: ./OffGit.exe
         generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

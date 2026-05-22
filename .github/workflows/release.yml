@@ -20,11 +20,10 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Build C++ Solution
-      # This runs in default cmd so it has access to the msbuild command
-      run: msbuild offgit/OffGit.slnx /p:Configuration=Release /p:Platform=x64
+      # Overriding the toolset to v143 forces VS 2022 to compile it without throwing an error
+      run: msbuild offgit/OffGit.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
 
     - name: Stage Raw Executable
-      # We target bash ONLY for this step so the wildcard expansion works
       shell: bash
       run: cp **/Release/OffGit.exe ./OffGit.exe
 

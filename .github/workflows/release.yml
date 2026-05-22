@@ -13,24 +13,40 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Build C++ Solution
-      # Overriding the toolset to v143 forces VS 2022 to compile it without throwing an error
-      run: msbuild offgit/OffGit.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143
+      - name: Build Project
+        run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m
 
-    - name: Stage Raw Executable
-      shell: bash
-      run: cp **/Release/OffGit.exe ./OffGit.exe
+      - name: 🔍 FIND THE EXE (VERY IMPORTANT)
+        shell: pwsh
+        run: |
+          echo "=== Searching everywhere for OffGit.exe ==="
+          Get-ChildItem -Path . -Recurse -Filter OffGit.exe -ErrorAction SilentlyContinue | 
+            Select-Object FullName, Length | Format-Table -AutoSize
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ./OffGit.exe
-        generate_release_notes: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Copy .exe to root for upload
+        shell: pwsh
+        run: |
+          $exePath = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
+          if ($exePath) {
+            Copy-Item $exePath -Destination "./OffGit.exe"
+            echo "✅ Copied $($exePath) to ./OffGit.exe"
+            dir ./OffGit.exe
+          } else {
+            echo "❌ OffGit.exe NOT FOUND"
+            exit 1
+          }
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./OffGit.exe
+          generate_release_notes: true
+          name: "OffGit ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -30,28 +30,12 @@ jobs:
             echo "❌ x64 Build failed to produce OffGit.exe"
             exit 1
           }
-      # --- Step 3: Build for ARM64 (with fallback if toolset unavailable) ---
-      - name: Build Project (ARM64)
-        run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=ARM64 /p:PlatformToolset=v143 /m
-        continue-on-error: true
-      # --- Step 4: Grab ARM64 if it succeeded ---
-      - name: Stage ARM64 Binary
-        shell: pwsh
-        run: |
-          $exe = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
-          if ($exe) {
-            Copy-Item $exe -Destination "./OffGitARM64.exe"
-            echo "✅ Saved ARM64 binary to root as OffGitARM64.exe"
-          } else {
-            echo "⚠️  ARM64 Build skipped or failed - only x64 will be released"
-          }
-      # --- Step 5: Upload binaries (x64 required, ARM64 optional) ---
+      # --- Step 3: Upload to GitHub Release ---
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./OffGitx64.exe
-            ./OffGitARM64.exe
           generate_release_notes: true
           name: "OffGit ${{ github.ref_name }}"
         env:

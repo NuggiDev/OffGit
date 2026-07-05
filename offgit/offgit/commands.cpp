@@ -12,7 +12,10 @@
 namespace fs = std::filesystem;
 
 static void runGit(const std::string& cmd) {
-    system(cmd.c_str());
+    int result = system(cmd.c_str());
+    if (result != 0 && result != 256) {
+        std::cerr << "[OffGit] Git command failed with code " << result << "\n";
+    }
 }
 
 void printHelp() {

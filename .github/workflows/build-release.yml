@@ -1,0 +1,58 @@
+name: Build and Release Windows C++ Project
+on:
+  push:
+    tags:
+      - 'v*'
+permissions:
+  contents: write
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+      # --- Step 1: Build for x64 ---
+      - name: Build Project (x64)
+        run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m
+      # --- Step 2: Grab x64 immediately before it gets overwritten ---
+      - name: Stage x64 Binary
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
+          if ($exe) {
+            Copy-Item $exe -Destination "./OffGitx64.exe"
+            echo "✅ Saved x64 binary to root as OffGitx64.exe"
+            # Clean up the original to avoid confusion later
+            Remove-Item $exe -Force
+          } else {
+            echo "❌ x64 Build failed to produce OffGit.exe"
+            exit 1
+          }
+      # --- Step 3: Build for ARM64 (with fallback if toolset unavailable) ---
+      - name: Build Project (ARM64)
+        run: msbuild offgit/offgit.slnx /p:Configuration=Release /p:Platform=ARM64 /p:PlatformToolset=v143 /m
+        continue-on-error: true
+      # --- Step 4: Grab ARM64 if it succeeded ---
+      - name: Stage ARM64 Binary
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path . -Recurse -Filter OffGit.exe | Select-Object -First 1 -ExpandProperty FullName
+          if ($exe) {
+            Copy-Item $exe -Destination "./OffGitARM64.exe"
+            echo "✅ Saved ARM64 binary to root as OffGitARM64.exe"
+          } else {
+            echo "⚠️  ARM64 Build skipped or failed - only x64 will be released"
+          }
+      # --- Step 5: Upload binaries (x64 required, ARM64 optional) ---
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./OffGitx64.exe
+            ./OffGitARM64.exe
+          generate_release_notes: true
+          name: "OffGit ${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
